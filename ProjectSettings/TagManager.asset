@@ -13,7 +13,9 @@ TagManager:
   - UI
   - 
   - 
-  - 
+  - HiddenNormalWorld
+  - PerceptionReveal
+  - Player
   - 
   - 
   - 
