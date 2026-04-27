@@ -5,7 +5,7 @@ This prototype simulates direct cane contact. It is not sonar. The player sees n
 ## Files
 
 - `Scripts/CanePrimitiveBuilder.cs` builds a cane from Unity primitive Cubes and a Sphere.
-- `Scripts/CaneContactRevealer.cs` detects cane tip contact with SphereCast and OverlapSphere.
+- `Scripts/CaneContactRevealer.cs` detects whole-cane contact and can keep cane-revealed areas visible.
 - `Scripts/FootContactRevealer.cs` reveals a tiny area near the player's feet.
 - `Scripts/PerceivableRevealObject.cs` stores recent contact points and sends them to the reveal material.
 - `Shaders/ContactRevealLinesURP.shader` is a simple URP transparent line reveal shader.
@@ -64,7 +64,7 @@ The generated cane uses:
 
 The cane uses the same outline shader style as perceivable objects. It is not drawn as a solid white model.
 
-The tip Sphere has a Sphere Collider, but detection is not limited to the tip. `CaneContactRevealer` checks the whole cane segment from the handle/root to the tip, using capsule overlap for current contact and several small SphereCasts while the cane moves. This means the shaft can reveal objects when it brushes or strikes them.
+The tip Sphere has a Sphere Collider, but detection is not limited to the tip. `CaneContactRevealer` checks the whole cane segment from the handle/root to the tip, using capsule overlap for current contact and several small SphereCasts while the cane moves. This means the shaft can reveal objects when it brushes or strikes them. By default, cane-revealed areas stay visible so the player can build up a remembered map of explored surfaces.
 
 ## Foot Perception Setup
 
@@ -103,18 +103,20 @@ The duplicate will be invisible by default because the shader clips all pixels w
 
 ## Testing In Play Mode
 
-The `Main` scene includes `Blind_Cane_TestScene_RuntimeBuilder`.
+The `Main` scene is baked with the player, cane, perceivable test objects, and tactile paving already in the hierarchy. It no longer needs `Blind_Cane_TestScene_RuntimeBuilder` to create the prototype when Play Mode starts.
 
 1. Open `Assets/Scenes/Main.unity`.
-2. Press Play.
-3. Use `WASD` to move the player and camera.
-4. Move the mouse to sweep the cane left, right, up, and down.
-5. Press `Esc` to unlock the mouse cursor.
-6. Move the cane tip or shaft into the ground, curb, wall, block, or pillar.
-7. Only a small area around the cane contact point should show white outline and surface shape detail.
-8. Sweep the cane across a wall to see a brief trail of recent contact points.
-9. Stop touching the object. The revealed areas fade out over `0.3` seconds by default.
-10. Walk near or over perceivable ground. The foot revealer should show a very small, faint local area near the player's feet, without a strong white ring.
+2. Confirm `Player_Blind_Cane_Test` and `Prototype_Test_Area` are visible in the hierarchy.
+3. Press Play.
+4. Use `WASD` to move the player and camera.
+5. Move the mouse without holding the left button to look around.
+6. Hold the left mouse button and drag to sweep the cane left, right, up, and down.
+7. Press `Esc` to unlock the mouse cursor.
+8. Move the cane tip or shaft into the ground, curb, wall, block, or pillar.
+9. Only a small area around the cane contact point should show white outline and surface shape detail.
+10. Sweep the cane across a wall to reveal explored areas.
+11. Stop touching the object. Cane-revealed areas stay visible by default, while foot-only reveals still fade out.
+12. Walk near or over perceivable ground. The foot revealer should show a very small, faint local area near the player's feet, without a strong white ring.
 
 The player camera is configured as a blind-perception camera. It renders the `Player`, `PerceptionReveal`, and `UI` layers, but not `HiddenNormalWorld`, so normal coloured geometry is hidden during Play Mode.
 

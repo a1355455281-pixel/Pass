@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public class PerceivableRevealObject : MonoBehaviour
 {
-    private const int MaxShaderPoints = 16;
+    private const int MaxShaderPoints = 32;
 
     public enum SurfaceShapePattern
     {
@@ -22,7 +22,7 @@ public class PerceivableRevealObject : MonoBehaviour
     public float defaultRevealRadius = 0.45f;
     public float fadeOutSeconds = 0.3f;
     public float minimumPointSpacing = 0.08f;
-    [Range(1, MaxShaderPoints)] public int maxRevealPoints = 12;
+    [Range(1, MaxShaderPoints)] public int maxRevealPoints = 32;
 
     [Header("Outline Visual")]
     public Color lineColour = Color.white;
@@ -70,13 +70,15 @@ public class PerceivableRevealObject : MonoBehaviour
         public float strength;
         public float ringStrength;
         public float age;
+        public bool persist;
 
-        public RevealPoint(Vector3 position, float radius, float strength, float ringStrength)
+        public RevealPoint(Vector3 position, float radius, float strength, float ringStrength, bool persist)
         {
             this.position = position;
             this.radius = radius;
             this.strength = strength;
             this.ringStrength = ringStrength;
+            this.persist = persist;
             age = 0f;
         }
     }
@@ -120,7 +122,7 @@ public class PerceivableRevealObject : MonoBehaviour
             RevealPoint point = revealPoints[i];
             point.age += Time.deltaTime;
 
-            if (point.age >= fadeOutSeconds)
+            if (!point.persist && point.age >= fadeOutSeconds)
             {
                 revealPoints.RemoveAt(i);
             }
@@ -135,20 +137,25 @@ public class PerceivableRevealObject : MonoBehaviour
 
     public void RevealAt(Vector3 worldPoint)
     {
-        RevealAt(worldPoint, defaultRevealRadius, 1f, 1f);
+        RevealAt(worldPoint, defaultRevealRadius, 1f, 1f, false);
     }
 
     public void RevealAt(Vector3 worldPoint, float radius)
     {
-        RevealAt(worldPoint, radius, 1f, 1f);
+        RevealAt(worldPoint, radius, 1f, 1f, false);
     }
 
     public void RevealAt(Vector3 worldPoint, float radius, float strength)
     {
-        RevealAt(worldPoint, radius, strength, 1f);
+        RevealAt(worldPoint, radius, strength, 1f, false);
     }
 
     public void RevealAt(Vector3 worldPoint, float radius, float strength, float ringStrength)
+    {
+        RevealAt(worldPoint, radius, strength, ringStrength, false);
+    }
+
+    public void RevealAt(Vector3 worldPoint, float radius, float strength, float ringStrength, bool persist)
     {
         radius = radius > 0f ? radius : defaultRevealRadius;
         strength = Mathf.Clamp01(strength);
@@ -157,16 +164,26 @@ public class PerceivableRevealObject : MonoBehaviour
         int nearbyPointIndex = FindNearbyPoint(worldPoint);
         if (nearbyPointIndex >= 0)
         {
-            revealPoints[nearbyPointIndex] = new RevealPoint(worldPoint, radius, strength, ringStrength);
+            RevealPoint existingPoint = revealPoints[nearbyPointIndex];
+            if (existingPoint.persist && !persist)
+            {
+                return;
+            }
+
+            revealPoints[nearbyPointIndex] = new RevealPoint(worldPoint, radius, strength, ringStrength, persist);
         }
         else
         {
             if (revealPoints.Count >= maxRevealPoints)
             {
-                RemoveOldestPoint();
+                bool removedPoint = RemoveOldestPoint(persist);
+                if (!removedPoint)
+                {
+                    return;
+                }
             }
 
-            revealPoints.Add(new RevealPoint(worldPoint, radius, strength, ringStrength));
+            revealPoints.Add(new RevealPoint(worldPoint, radius, strength, ringStrength, persist));
         }
 
         SendRevealDataToMaterials();
@@ -200,13 +217,35 @@ public class PerceivableRevealObject : MonoBehaviour
         return -1;
     }
 
-    private void RemoveOldestPoint()
+    private bool RemoveOldestPoint(bool allowRemovingPersistentPoints)
     {
-        int oldestIndex = 0;
-        float oldestAge = revealPoints[0].age;
-
-        for (int i = 1; i < revealPoints.Count; i++)
+        int oldestIndex = FindOldestPointIndex(false);
+        if (oldestIndex < 0 && allowRemovingPersistentPoints)
         {
+            oldestIndex = FindOldestPointIndex(true);
+        }
+
+        if (oldestIndex < 0)
+        {
+            return false;
+        }
+
+        revealPoints.RemoveAt(oldestIndex);
+        return true;
+    }
+
+    private int FindOldestPointIndex(bool includePersistentPoints)
+    {
+        int oldestIndex = -1;
+        float oldestAge = float.NegativeInfinity;
+
+        for (int i = 0; i < revealPoints.Count; i++)
+        {
+            if (revealPoints[i].persist && !includePersistentPoints)
+            {
+                continue;
+            }
+
             if (revealPoints[i].age > oldestAge)
             {
                 oldestAge = revealPoints[i].age;
@@ -214,7 +253,7 @@ public class PerceivableRevealObject : MonoBehaviour
             }
         }
 
-        revealPoints.RemoveAt(oldestIndex);
+        return oldestIndex;
     }
 
     private void SendRevealDataToMaterials()
@@ -235,7 +274,7 @@ public class PerceivableRevealObject : MonoBehaviour
         for (int i = 0; i < pointCount; i++)
         {
             RevealPoint point = revealPoints[i];
-            float fadeAlpha = 1f - Mathf.Clamp01(point.age / fadeOutSeconds);
+            float fadeAlpha = point.persist ? 1f : 1f - Mathf.Clamp01(point.age / fadeOutSeconds);
             shaderPoints[i] = new Vector4(point.position.x, point.position.y, point.position.z, fadeAlpha * point.strength);
             shaderRadii[i] = point.radius;
             shaderRingStrengths[i] = point.ringStrength;

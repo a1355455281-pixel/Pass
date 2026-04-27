@@ -108,6 +108,7 @@ public class CanePrimitiveBuilder : MonoBehaviour
             revealer.contactRadius = contactRadius;
             revealer.wholeCaneSampleCount = 7;
             revealer.revealRadius = revealRadius;
+            revealer.keepRevealedAreasVisible = true;
             revealer.perceivableLayers = perceivableLayers;
         }
     }

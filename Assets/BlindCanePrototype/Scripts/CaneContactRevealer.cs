@@ -15,6 +15,7 @@ public class CaneContactRevealer : MonoBehaviour
 
     [Header("Reveal")]
     public float revealRadius = 0.45f;
+    public bool keepRevealedAreasVisible = true;
     public LayerMask perceivableLayers = ~0;
     public QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Collide;
 
@@ -208,7 +209,7 @@ public class CaneContactRevealer : MonoBehaviour
 
         if (perceivable != null)
         {
-            perceivable.RevealAt(contactPoint, revealRadius);
+            perceivable.RevealAt(contactPoint, revealRadius, 1f, 1f, keepRevealedAreasVisible);
         }
     }
 

@@ -94,7 +94,11 @@ public class BlindCanePrototypeRuntimeSceneBuilder : MonoBehaviour
         Transform caneRoot = player.transform.Find(caneBuilder.caneRootName);
         MouseCaneController mouseCane = player.AddComponent<MouseCaneController>();
         mouseCane.caneRoot = caneRoot;
-        mouseCane.mouseSensitivity = 2.4f;
+        mouseCane.cameraTransform = cameraObject.transform;
+        mouseCane.caneMouseSensitivity = 2.4f;
+        mouseCane.viewMouseSensitivity = 2f;
+        mouseCane.minViewPitch = -55f;
+        mouseCane.maxViewPitch = 75f;
         mouseCane.minYaw = -85f;
         mouseCane.maxYaw = 85f;
         mouseCane.minDownAngle = 20f;
@@ -165,7 +169,7 @@ public class BlindCanePrototypeRuntimeSceneBuilder : MonoBehaviour
         PerceivableRevealObject perceivable = reveal.AddComponent<PerceivableRevealObject>();
         perceivable.defaultRevealRadius = revealRadius;
         perceivable.fadeOutSeconds = 0.3f;
-        perceivable.maxRevealPoints = 12;
+        perceivable.maxRevealPoints = 32;
         perceivable.surfacePattern = surfacePattern;
         perceivable.surfaceShapeStrength = surfaceStrength;
         perceivable.surfaceShapeSpacing = surfaceSpacing;

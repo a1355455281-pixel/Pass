@@ -70,9 +70,9 @@ Shader "BlindPerception/Contact Reveal Lines URP"
                 float _RevealCount;
             CBUFFER_END
 
-            float4 _RevealPoints[16];
-            float _RevealRadii[16];
-            float _RevealRingStrengths[16];
+            float4 _RevealPoints[32];
+            float _RevealRadii[32];
+            float _RevealRingStrengths[32];
 
             Varyings Vert(Attributes input)
             {
@@ -92,7 +92,7 @@ Shader "BlindPerception/Contact Reveal Lines URP"
                 contactRingMask = 0.0;
 
                 [unroll]
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < 32; i++)
                 {
                     if (i >= (int)_RevealCount)
                     {
